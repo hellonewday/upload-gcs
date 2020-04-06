@@ -1,0 +1,19 @@
+{
+  "name": "gcp-storage-api",
+  "version": "1.0.0",
+  "description": "Create a REST API for uploading files on Google Cloud Storage.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server",
+    "dev": "nodemon server"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/storage": "^4.7.0",
+    "express": "^4.17.1",
+    "mongoose": "^5.9.7",
+    "multer": "^1.4.2"
+  }
+}
