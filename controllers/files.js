@@ -1,5 +1,10 @@
 const File = require("../model/File");
-const { uploadImage } = require("../functions/fileUpload");
+const { Storage } = require("@google-cloud/storage");
+
+const storage = new Storage({
+  projectId: "flowing-coil-269914",
+  keyFilename: "./flowing-coil-269914-569572b276ae.json",
+});
 
 module.exports.showFiles = (req, res) => {
   File.find().exec((error, response) => {
@@ -11,28 +16,34 @@ module.exports.showFiles = (req, res) => {
   });
 };
 
-module.exports.uploadFiles = (req, res) => {
-  // Apply Google Cloud Storage.
-  uploadImage("my-warm-bucket", req.file.path)
-    .then((response) => {
-      //  res.status(201).json({
-      //    success: true,
-      //    url: `https://storage.cloud.google.com/my-warm-bucket/${response[0].metadata.name}`,
-      //  });
+module.exports.uploadFiles = (req, res, next) => {
+  const bucket = storage.bucket("my-warm-bucket");
+  const blob = bucket.file(req.file.originalname);
 
-      let output = new File({
-        fileUrl: `https://storage.cloud.google.com/my-warm-bucket/${response[0].metadata.name}`,
-        description: req.body.description,
-      });
-      output.save((err, doc) => {
-        if (err) {
-          res.status(404).json({ error: err });
-        } else {
-          res.status(201).json({ success: true, data: doc });
-        }
-      });
-    })
-    .catch((error) => {
-      res.status(400).json({ success: false, error });
+  const blobStream = blob.createWriteStream({
+    resumable: false,
+  });
+
+  blobStream.on("error", (err) => {
+    next(err);
+  });
+
+  blobStream.on("finish", () => {
+    const fileUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+
+    const input = new File({
+      fileUrl,
+      description: req.body.description,
     });
+
+    input.save((error, response) => {
+      if (error) {
+        res.status(400).json({ success: false, error });
+      } else {
+        res.status(201).json({ success: true, response });
+      }
+    });
+  });
+
+  blobStream.end(req.file.buffer);
 };

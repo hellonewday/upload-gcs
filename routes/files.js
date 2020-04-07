@@ -1,19 +1,12 @@
-// Start coding from here
 const router = require("express").Router();
 const fileController = require("../controllers/files");
 const multer = require("multer");
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "./images");
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
-  },
-});
-
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
 });
 
 router.get("/", fileController.showFiles);
